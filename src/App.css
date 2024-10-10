@@ -1,0 +1,376 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.water-animation {
+  width: 100%;
+  height: 100vh;
+  background-color: #262626;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: opacity 1s ease-out;
+  position: relative;
+}
+
+
+.welcome-text {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 24px;
+  color: #ffffff; /* White text */
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Text shadow for better visibility */
+  z-index: 10; /* Ensure it's above other elements */
+}
+
+.water-animation.fade-out {
+  opacity: 0;
+}
+
+.center {
+  width: 80vmin;
+  height: 80vmin;
+  max-width: 500px;
+  max-height: 500px;
+  position: relative;
+}
+
+.circle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.wave {
+  background-color: #3f68c5;
+  position: absolute;
+  top: 110%;
+  height: 200%;
+  width: 200%;
+  border-radius: 38%;
+  left: -50%;
+  transform: rotate(0deg);
+  animation: wave 5s linear forwards;
+}
+
+.wave.filled {
+  animation: none;
+  top: -50%;
+  transform: rotate(360deg);
+}
+
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+    top: 110%;
+  }
+  100% {
+    transform: rotate(360deg);
+    top: -50%;
+  }
+}
+.fish {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0;
+}
+
+
+#fish1 { animation: swimFish1 8s ease-in-out infinite; }
+#fish2 { animation: swimFish2 10s ease-in-out infinite; }
+#fish3 { animation: swimFish3 9s ease-in-out infinite; }
+#fish4 { animation: swimFish4 15s ease-in-out infinite; }
+#fish5 { animation: swimFish5 13s ease-in-out infinite; }
+
+@keyframes moveSubmarine {
+  0% { right: -20%; opacity: 0; }
+  20% { opacity: 1; }
+  100% { right: 50%; opacity: 1; } /* Stop at center */
+}
+
+@keyframes swimFish1 {
+  0% { opacity: 0; left: -10%; top: 30%; }
+  5% { opacity: 1; }
+  25%, 100% { left: 70%; top: 20%; }
+  50% { left: 60%; top: 60%; }
+  75% { left: 20%; top: 50%; }
+}
+
+@keyframes swimFish2 {
+  0% { opacity: 0; right: -10%; top: 70%; }
+  5% { opacity: 1; }
+  25%, 100% { right: 60%; top: 50%; }
+  50% { right: 70%; top: 30%; }
+  75% { right: 30%; top: 60%; }
+}
+
+@keyframes swimFish3 {
+  0% { opacity: 0; left: 50%; top: -10%; }
+  5% { opacity: 1; }
+  25%, 100% { left: 20%; top: 80%; }
+  50% { left: 80%; top: 40%; }
+  75% { left: 40%; top: 20%; }
+}
+
+@keyframes swimFish4 {
+  0% { opacity: 0; right: 50%; bottom: -10%; }
+  5% { opacity: 1; }
+  25%, 100% { right: 30%; bottom: 70%; }
+  50% { right: 70%; bottom: 20%; }
+  75% { right: 20%; bottom: 50%; }
+}
+
+@keyframes swimFish5 {
+  0% { opacity: 0; left: 110%; top: 50%; }
+  5% { opacity: 1; }
+  25%, 100% { left: 30%; top: 40%; }
+  50% { left: 70%; top: 70%; }
+  75% { left: 20%; top: 20%; }
+}
+
+/* Submarine styles */
+.submarine__container {
+  position: absolute;
+  top: 50%;
+  right: -20%; /* Change from left: -20% to right: -20% */
+  width: 200px;
+  height: 100px;
+  transform: translate(50%, -50%); /* Change from translate(-50%, -50%) */
+  animation: moveSubmarine 4s ease-in-out forwards;
+}
+
+@keyframes moveSubmarine {
+  0% { right: -20%; opacity: 0; }
+  20% { opacity: 1; }
+  100% { right: 50%; opacity: 1; } /* Stop at center */
+}
+
+.submarine__body {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 125px;
+  height: 40px;
+  background: #e30449;
+  border-radius: 25px;
+  transform: translate(-50%, -50%);
+}
+
+.submarine__propeller {
+  position: absolute;
+  left: 80%;
+  top: 50%;
+  width: 15px;
+  height: 25px;
+  transform: translate(0%, -50%);
+  perspective: 300px;
+}
+
+.propeller__perspective {
+  width: 100%;
+  height: 100%;
+  transition: transform 1s;
+  transform-style: preserve-3d;
+  animation: rotateInfinite 1s linear infinite;
+}
+
+.submarine__propeller-parts {
+  position: absolute;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  top: 0%;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.darkOne {
+  background: #f7ac08;
+  transform: rotateY(180deg) rotateX(225deg);
+}
+
+.lightOne {
+  background: #f7e349;
+  transform: rotateX(45deg);
+}
+
+.submarine__sail {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 45px;
+  height: 25px;
+  transform: translate(-50%, -100%);
+  background: #c6003d;
+  clip-path: polygon(0% 0%, 70% 0%, 100% 100%, 0% 100%);
+}
+
+.submarine__sail-shadow {
+  position: absolute;
+  width: 160%;
+  height: 10%;
+  background: #a10532;
+  border-radius: 5px;
+}
+
+.dark1 {
+  left: 0%;
+  top: 0%;
+  transform: translate(0%, -33%);
+}
+
+.dark2 {
+  left: 0%;
+  top: 50%;
+}
+
+.light1 {
+  left: 20%;
+  top: 20%;
+  width: 50%;
+  background: #ef689e;
+}
+
+.submarine__window {
+  width: 12px;
+  height: 12px;
+  border-radius: 100%;
+  background-image: linear-gradient(45deg, #c9e5d9, #fff);
+  border: 4px solid #a10532;
+  z-index: 10;
+  animation: shadow-change 1s linear infinite;
+}
+
+.one,
+.two {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.one {
+  left: 40%;
+}
+
+.two {
+  left: 20%;
+}
+
+.submarine__shadow-dark {
+  position: absolute;
+  left: 70%;
+  top: 50%;
+  width: 35px;
+  height: 5px;
+  border-radius: 5px;
+  transform: translate(-50%, -50%);
+  background: #a10532;
+}
+
+.submarine__shadow-light {
+  position: absolute;
+  left: 35%;
+  top: 13%;
+  width: 50px;
+  height: 3px;
+  border-radius: 5px;
+  transform: translate(-50%, -50%);
+  background: #ef689e;
+}
+
+.submarine__shadow-arcLight {
+  position: absolute;
+  top: 65%;
+  left: 80%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef689e;
+}
+
+.submarine__periscope {
+  position: absolute;
+  top: 0%;
+  left: 40%;
+  width: 10px;
+  height: 25px;
+  border-right: 5px solid #e92d77;
+  border-top: 5px solid #c6003d;
+  border-left: 0px solid transparent;
+  border-bottom: 0px solid transparent;
+  border-top-right-radius: 5px;
+}
+
+.submarine__periscope-glass {
+  position: absolute;
+  left: 40%;
+  top: 0%;
+  width: 2px;
+  height: 7px;
+  background: #f7ac08;
+  transform: translate(-50%, -15%);
+}
+
+.light {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 250px;
+  height: 50px;
+  background: linear-gradient(to left, #817E97, transparent);
+  clip-path: polygon(0% 0%, 50% 45%, 50% 55%, 0% 100%);
+  transform: translate(-18%, -45%);
+}
+
+@keyframes shadow-change {
+  0%, 100% {
+    background-image: linear-gradient(45deg, #c9e5d9 0%, #c9e5d9 20%, #fff 21%, #fff 39%, #c9e5d9 40%, #fff 41%, #fff 59%, #c9e5d9 60%);
+  }
+  50% {
+    background-image: linear-gradient(45deg, #c9e5d9 40%, #c9e5d9 60%, #fff 61%, #fff 79%, #c9e5d9 80%, #fff 81%, #fff 99%, #c9e5d9 0%);
+  }
+}
+
+@keyframes rotateInfinite {
+  0% {
+    transform: rotateX(0deg);
+  }
+  100% {
+    transform: rotateX(360deg);
+  }
+}
+/* Apply to the entire HTML and body */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background-color: #ffffff; /* Your background color */
+}
+
+.App {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1; /* Ensures content grows with the app */
+}
+
