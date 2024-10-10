@@ -1,15 +1,18 @@
 import React from 'react'
-
-const Readings = () => {
+import { useEffect } from 'react';
+const Readings = ({ sensorData }) => {
+  useEffect(() => {
+    console.log("New sensor data received:", sensorData);
+  }, [sensorData]);
   return (
     <div className='flex-1'>
-      <h1 className='text-center py-4'>Power Metrics</h1>
-      <h1 className='text-left py-1'>Power Supply</h1>
-      <h1 className='text-left py-1'>Power Usage</h1>
-      <h1 className='text-left py-1'>Battery Level</h1>
+      
       <h1 className='text-center pb-2 pt-3'>Sensor Feed</h1>
-      <h1 className='text-left pb-3'>Depth</h1>
+      <h1 className='text-left pb-3'>Depth: {sensorData ? `${sensorData.depth} m` : 'N/A'}</h1>
+      <h1 className='text-left pb-3'>Temperature: {sensorData ? `${sensorData.temperature} °C` : 'N/A'}</h1>
+      <h1 className='text-left pb-3'>Pressure: {sensorData ? `${sensorData.pressure} hPa` : 'N/A'}</h1>
     </div>
   )
 }
+
 export default Readings

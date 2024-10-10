@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
 import './App.css';
 import WaterAnimation from './components/intro';
 import Topbar from './components/Topbar';
@@ -10,6 +10,8 @@ function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [cameraData, setCameraData] = useState({ camera1: null, camera2: null });
+  const [sensorData, setSensorData] = useState(null);
   const { setIpAddress } = useContext(IpAddressContext);
 
   const handleAnimationComplete = () => {
@@ -36,7 +38,24 @@ function App() {
       console.log('WebSocket disconnected');
       setSocket(null);
     };
+
+    newSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'camera') {
+        setCameraData(prevData => ({ ...prevData, [data.camera]: data.frame }));
+      } else if (data.type === 'sensor') {
+        setSensorData(data.data);
+      }
+    };
   }, [setIpAddress]);
+
+  useEffect(() => {
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, [socket]);
 
   return (
     <div className="App">
@@ -47,7 +66,7 @@ function App() {
       ) : (
         <div className="h-screen w-full">
           <Topbar />
-          <Mainframe socket={socket} />
+          <Mainframe socket={socket} cameraData={cameraData} sensorData={sensorData} />
         </div>
       )}
     </div>
