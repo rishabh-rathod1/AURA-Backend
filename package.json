@@ -1,0 +1,124 @@
+{
+  "name": "aura-nexus-interface",
+  "version": "1.0.0",
+  "description": "AURA Nexus Interface: Manage and monitor the Aquatic Unmanned Research Assistant (AURA) ROV seamlessly.",
+  "author": "Rishabh Rathod, Ronie Samuel",
+  "license": "MIT",
+  "main": "electron-main.js",
+  "private": true,
+  "homepage": "./",
+  "scripts": {
+    "start": "react-scripts start",
+    "electron": "electron .",
+    "build": "react-scripts build",
+    "package": "electron-builder",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron:serve": "concurrently -k \"cross-env npm start\" \"npm run electron:start\"",
+    "electron:build": "electron-builder",
+    "electron:start": "wait-on tcp:3000 && electron .",
+    "electron-dev": "concurrently \" npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "make": "electron-forge make"
+  },
+  "build": {
+    "appId": "com.aura.nexusinterface",
+    "productName": "AURA Nexus Interface",
+    "files": [
+      "build/**/*",
+      "electron-main.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "path/to/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "path/to/installerIcon.ico",
+      "uninstallerIcon": "path/to/uninstallerIcon.ico",
+      "installerHeaderIcon": "path/to/installerHeaderIcon.ico",
+      "allowElevation": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "path/to/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "path/to/icons/"
+    }
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.9",
+    "@mui/material": "^6.1.8",
+    "@radix-ui/react-alert-dialog": "^1.1.2",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.7.7",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron-is-dev": "^3.0.1",
+    "electron-squirrel-startup": "^1.0.1",
+    "framer-motion": "^11.11.17",
+    "heroicons": "^2.2.0",
+    "html2canvas": "^1.4.1",
+    "lucide-react": "^0.460.0",
+    "peerjs": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-joystick-component": "^6.2.1",
+    "react-qr-code": "^2.0.15",
+    "react-router-dom": "^7.0.1",
+    "react-scripts": "^5.0.1",
+    "sass": "^1.77.8",
+    "socket.io-client": "^4.7.5",
+    "tailwind-merge": "^2.5.4",
+    "wait-on": "^8.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.5.0",
+    "@electron-forge/maker-deb": "^7.5.0",
+    "@electron-forge/maker-rpm": "^7.5.0",
+    "@electron-forge/maker-squirrel": "^7.5.0",
+    "@electron-forge/maker-zip": "^7.5.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
+    "@electron-forge/plugin-fuses": "^7.5.0",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "electron-packager": "^17.1.2",
+    "tailwindcss": "^3.4.10"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

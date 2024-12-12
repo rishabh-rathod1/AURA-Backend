@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLTF Viewer</title>
+    <style>
+        /* Previous styles remain the same */
+        body {
+            margin: 0;
+            background-color: #2a2a2a;
+            overflow: hidden;
+        }
+        #viewer-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        #loading-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+        }
+        #error-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewer-container">
+        <div id="loading-message">Loading 3D viewer...</div>
+        <div id="error-message"></div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import WebGL from 'three/addons/capabilities/WebGL.js';
+
+        let camera, scene, renderer, model;
+        const container = document.getElementById('viewer-container');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+
+        const config = {
+            modelPath: '../models/model.gltf',
+            backgroundColor: 0x2a2a2a,  // Dark gray background
+            modelColor: 0xcccccc,       // Light gray for the model
+            ambientLightColor: 0xffffff,
+            ambientLightIntensity: 0.5,
+            directionalLightColor: 0xffffff,
+            directionalLightIntensity: 1.0,
+            cameraDistance: 200         // Adjusted camera distance
+        };
+
+        function showError(message, details = '') {
+            loadingMessage.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorMessage.innerHTML = `${message}${details ? `<div class="error-details">${details}</div>` : ''}`;
+            console.error(message, details);
+        }
+
+        function checkWebGLSupport() {
+            if (!WebGL.isWebGLAvailable()) {
+                throw new Error(WebGL.getWebGLErrorMessage());
+            }
+        }
+
+        async function initRenderer() {
+            try {
+                renderer = new THREE.WebGLRenderer({ 
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: "high-performance"
+                });
+                
+                const gl = renderer.getContext();
+                if (!gl) {
+                    throw new Error('Unable to obtain WebGL context');
+                }
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setClearColor(config.backgroundColor);
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.0;
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                container.appendChild(renderer.domElement);
+
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            } catch (error) {
+                throw new Error(`WebGL initialization failed: ${error.message}`);
+            }
+        }
+
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(config.backgroundColor);
+            scene.fog = new THREE.Fog(config.backgroundColor, 500, 3000);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 3000);
+            camera.position.set(config.cameraDistance, config.cameraDistance * 0.5, config.cameraDistance);
+            camera.lookAt(0, 0, 0);
+
+            // Lighting setup
+            // Ambient light for base illumination
+            const ambientLight = new THREE.AmbientLight(config.ambientLightColor, config.ambientLightIntensity);
+            scene.add(ambientLight);
+
+            // Key light (main directional light)
+            const keyLight = new THREE.DirectionalLight(config.directionalLightColor, config.directionalLightIntensity);
+            keyLight.position.set(200, 200, 100);
+            keyLight.castShadow = true;
+            scene.add(keyLight);
+
+            // Fill light (secondary directional light)
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            fillLight.position.set(-100, 0, -100);
+            scene.add(fillLight);
+
+            // Rim light (back light for edge definition)
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            rimLight.position.set(0, -100, -100);
+            scene.add(rimLight);
+
+            // Add ground plane for better perspective
+            const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: config.backgroundColor,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -100;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+
+        async function loadModel(url) {
+            console.log('Loading model from:', url);
+            const loader = new GLTFLoader();
+            
+            try {
+                const gltf = await new Promise((resolve, reject) => {
+                    loader.load(url, resolve,
+                        (xhr) => {
+                            if (xhr.lengthComputable) {
+                                const percentComplete = (xhr.loaded / xhr.total) * 100;
+                                loadingMessage.textContent = `Loading: ${Math.round(percentComplete)}%`;
+                            }
+                        },
+                        (error) => reject(new Error(`Failed to load model: ${error.message}`))
+                    );
+                });
+
+                model = gltf.scene;
+
+                // Enhance model materials
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        // Create new enhanced material
+                        const newMaterial = new THREE.MeshStandardMaterial({
+                            color: config.modelColor,
+                            metalness: 0.5,
+                            roughness: 0.3,
+                            envMapIntensity: 1.0
+                        });
+                        
+                        node.material = newMaterial;
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                });
+
+                // Center and scale model
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
+                // Calculate scale to make the model a reasonable size
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 100 / maxDim;
+                model.scale.multiplyScalar(scale);
+                
+                // Position model just above the ground
+                model.position.sub(center.multiplyScalar(scale));
+                model.position.y = 0;
+
+                scene.add(model);
+                loadingMessage.style.display = 'none';
+                console.log('Model loaded successfully');
+
+            } catch (error) {
+                console.error('Model loading failed:', error);
+                throw error;
+            }
+        }
+
+        let rotationSpeed = 0.005;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (model) {
+                model.rotation.y += rotationSpeed;
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        async function init() {
+            try {
+                checkWebGLSupport();
+                await initRenderer();
+                initScene();
+                await loadModel(config.modelPath);
+                animate();
+            } catch (error) {
+                let errorMessage = 'Failed to initialize the viewer';
+                let details = error.message || '';
+
+                if (error.message.includes('WebGL')) {
+                    errorMessage = 'WebGL is not properly supported or enabled';
+                    details = 'Please check your browser settings and graphics drivers.';
+                } else if (error.message.includes('Failed to load model')) {
+                    errorMessage = 'Failed to load the 3D model';
+                    details = 'The model file might be corrupted or in an unsupported format';
+                }
+
+                showError(errorMessage, details);
+            }
+        }
+
+        window.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            showError('WebGL context lost', 'Please refresh the page.');
+        }, false);
+
+        window.addEventListener('resize', onWindowResize, false);
+        
+        init().catch(error => {
+            showError('Initialization failed', error.message);
+        });
+    </script>
+</body>
+</html>

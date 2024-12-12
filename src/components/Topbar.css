@@ -1,0 +1,48 @@
+/* Import the Good Times Rg font */
+@font-face {
+    font-family: "Good Times Rg";
+    src: url("https://fonts.cdnfonts.com/s/6987/GoodTimesRg-Regular.woff") format("woff");
+  }
+  
+  .font-good-times {
+    font-family: "Good Times Rg", sans-serif;
+  }
+  
+  .animate-glow {
+    animation: glow 3s infinite alternate;
+  }
+  
+  @keyframes glow {
+    0% {
+      opacity: 0.4;
+    }
+    100% {
+      opacity: 0.7;
+    }
+  }
+/* Topbar.css */
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+  }
+}
+
+.animate-glow {
+  animation: glow 1.5s infinite alternate;
+}
+
+.font-good-times {
+  font-family: 'Good Times', sans-serif; /* Replace with your custom font */
+}
+
+nav:hover {
+  background-color: rgba(0, 255, 255, 0.1); /* Slight highlight effect */
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.7); /* Glowing effect on hover */
+}
+  
