@@ -68,19 +68,71 @@ def control_rov(command):
                 print(f"Axis {i}: {axis_value:.2f}")
 
 # Original WebSocket handler
+# WebSocket handler with change tracking
+previous_axes = None
+previous_buttons = None
+
 async def handle_websocket(websocket, path):
+    global previous_axes, previous_buttons
     try:
         async for message in websocket:
             data = json.loads(message)
-            command = data.get('command')
-            if command == 'update':
-                control_rov(data)
-                await websocket.send(json.dumps({"status": "success", "message": "Received controller update"}))
-            else:
-                await websocket.send(json.dumps({"status": "error", "message": "Invalid command"}))
+            
+            # Process gamepad-related messages
+            if 'axes' in data or 'buttons' in data:
+                changed_axes = False
+                changed_buttons = False
+                
+                # Track axes changes
+                if 'axes' in data:
+                    if previous_axes is None:
+                        previous_axes = [0] * len(data['axes'])
+                    
+                    for i, (current, previous) in enumerate(zip(data['axes'], previous_axes)):
+                        # Only log significant changes (threshold of 0.1)
+                        if abs(current - previous) > 0.1:
+                            print(f"Axis {i} changed: {current:.2f}")
+                            changed_axes = True
+                    
+                    previous_axes = data['axes']
+                
+                # Track button changes
+                if 'buttons' in data:
+                    if previous_buttons is None:
+                        previous_buttons = [0] * len(data['buttons'])
+                    
+                    for i, (current, previous) in enumerate(zip(data['buttons'], previous_buttons)):
+                        # Log button state changes
+                        if current != previous:
+                            if current:
+                                print(f"Button {i} pressed")
+                                changed_buttons = True
+                    
+                    previous_buttons = data['buttons']
+                
+                # Send acknowledgment if any changes occurred
+                if changed_axes or changed_buttons:
+                    await websocket.send(json.dumps({"status": "success", "message": "Input received"}))
+            
+            # Process advanced controller updates
+            elif 'command' in data and data['command'] == 'update':
+                changed_advanced_settings = False
+                
+                # Remove 'command' from the data to process other settings
+                data.pop('command', None)
+                
+                # Print out each advanced controller setting update
+                for key, value in data.items():
+                    print(f"Advanced Controller - {key}: {value}")
+                    changed_advanced_settings = True
+                
+                # Send acknowledgment for advanced controller updates
+                if changed_advanced_settings:
+                    await websocket.send(json.dumps({"status": "success", "message": "Advanced settings received"}))
+    
     except websockets.exceptions.ConnectionClosed:
         pass
-
+        
 async def websocket_server():
     server = await websockets.serve(handle_websocket, "localhost", 8765)
     print("WebSocket server started on ws://localhost:8765")
