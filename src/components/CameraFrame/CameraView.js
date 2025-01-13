@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef } from 'react';
 import VisionControls from './VisionControls';
 import { IpAddressContext } from '../../IpAddressContext';
-import { Camera, Maximize2, Minimize2, Lock, Unlock } from 'lucide-react';
+import { Camera, Maximize2, Minimize2, Lock, Unlock, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 const CameraView = ({ socket }) => {
@@ -54,7 +54,18 @@ const CameraView = ({ socket }) => {
 
   const CameraStream = ({ title, url }) => {
     const [isDetached, setIsDetached] = useState(false);
-  
+    const [streamError, setStreamError] = useState(false);
+
+    const ErrorDisplay = () => (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 rounded-md">
+        <AlertCircle className="w-8 h-8 text-red-400 mb-1" />
+        <div className="text-center">
+          <h3 className="text-sm font-medium text-slate-700">Camera Not Accessible</h3>
+          <p className="text-xs text-slate-500">Please check your camera connection</p>
+        </div>
+      </div>
+    );
+
     const DetachedView = () => {
       return createPortal(
         <div 
@@ -80,28 +91,16 @@ const CameraView = ({ socket }) => {
                 </button>
               </div>
               <div className="relative flex-1 rounded-lg overflow-hidden">
-                <img
-                  src={url}
-                  alt={`${title} Stream`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = '';
-                    e.target.alt = 'Stream not available';
-                    e.target.parentElement.innerHTML = `
-                      <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 rounded-lg">
-                        <svg class="w-12 h-12 text-red-400 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="12" y1="8" x2="12" y2="12"/>
-                          <line x1="12" y1="16" x2="12" y2="16"/>
-                        </svg>
-                        <div class="text-center">
-                          <h3 class="text-base font-medium text-slate-700">Camera Not Accessible</h3>
-                          <p class="text-sm text-slate-500">Please check your camera connection</p>
-                        </div>
-                      </div>
-                    `;
-                  }}
-                />
+                {streamError ? (
+                  <ErrorDisplay />
+                ) : (
+                  <img
+                    src={url}
+                    alt={`${title} Stream`}
+                    className="w-full h-full object-cover"
+                    onError={() => setStreamError(true)}
+                  />
+                )}
               </div>
               <div className="mt-2 px-3 py-2 bg-slate-50 rounded-md border border-slate-200">
                 <span className="text-sm text-slate-700 truncate block">
@@ -122,28 +121,16 @@ const CameraView = ({ socket }) => {
             <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
           </div>
           <div className="relative h-[calc(100%-4rem)] mt-2">
-            <img
-              src={url}
-              alt={`${title} Stream`}
-              className="w-full h-full object-cover rounded-md border border-slate-200"
-              onError={(e) => {
-                e.target.src = '';
-                e.target.alt = 'Stream not available';
-                e.target.parentElement.innerHTML = `
-                  <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-100 rounded-md">
-                    <svg class="w-8 h-8 text-red-400 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12" y2="16"/>
-                    </svg>
-                    <div class="text-center">
-                      <h3 class="text-sm font-medium text-slate-700">Camera Not Accessible</h3>
-                      <p class="text-xs text-slate-500">Please check your camera connection</p>
-                    </div>
-                  </div>
-                `;
-              }}
-            />
+            {streamError ? (
+              <ErrorDisplay />
+            ) : (
+              <img
+                src={url}
+                alt={`${title} Stream`}
+                className="w-full h-full object-cover rounded-md border border-slate-200"
+                onError={() => setStreamError(true)}
+              />
+            )}
             <button
               onClick={() => setIsDetached(true)}
               className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-md transition-colors"
@@ -161,6 +148,10 @@ const CameraView = ({ socket }) => {
       </>
     );
   };
+
+
+
+
 
   const renderSection = (section, index) => {
     const style = {
