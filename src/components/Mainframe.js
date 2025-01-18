@@ -1,19 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState,useEffect } from 'react';
 import Cameraview from './CameraFrame/CameraView';
 import AnalyticsSuit from './Analytics/AnalyticsFrame';
 import ControllerDisplay from './ControllerDisplay';
 import Topbar from './Topbar';
-import { Compass, Gauge, Navigation, Camera, Radio, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
+import { Compass, Gauge, Navigation, Camera, Radio } from 'lucide-react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import FeaturePortal from './FeaturePortal';
 import AutonomousControlPage from './Genesis';
 import FloatingAutonomousButton from './FloatingAutonomousButton';
 import AdvancedController from './AdvancedController';
-import ConnectPopup from './ConnectPopup';
-
-
-
-
-
 
 const TabControl = ({ active, onChange, options }) => (
   <div className="flex w-full border-b border-blue-100">
@@ -33,9 +28,6 @@ const TabControl = ({ active, onChange, options }) => (
   </div>
 );
 
-const RECONNECT_TIMEOUT = 5000; // 5 seconds timeout for connection attempts
-const MAX_RETRY_ATTEMPTS = 3;
-
 const FEATURES = {
   thrusterPower: { name: 'Main Thruster Power', defaultLocked: false },
   frontThrusters: { name: 'Front Thrusters', defaultLocked: false },
@@ -54,110 +46,35 @@ const FEATURES = {
   emergencyMode: { name: 'Emergency Surface', defaultLocked: false }
 };
 
-const Mainframe = ({ socket, cameraData, sensorData, onConnect }) => {
+const Mainframe = ({ socket, cameraData, sensorData }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPermissionAlert, setShowPermissionAlert] = useState(false);
   const [activeController, setActiveController] = useState("basic");
   const [isAutonomousMode, setIsAutonomousMode] = useState(false);
-  const [lastConnectedIp, setLastConnectedIp] = useState('');
-  const [isReconnecting, setIsReconnecting] = useState(false);
-  const [showConnectPopup, setShowConnectPopup] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
-
-
-  // Store the last connected IP
   useEffect(() => {
-    if (socket) {
-      const checkConnection = () => {
-        const newStatus = socket.readyState === WebSocket.OPEN ? 'connected' 
-                       : socket.readyState === WebSocket.CONNECTING ? 'connecting'
-                       : 'disconnected';
-        
-        setConnectionStatus(newStatus);
-        
-        if (newStatus === 'connected') {
-          setRetryCount(0);
-          setShowConnectPopup(false); // Ensure popup is closed when connected
-        } else if (newStatus === 'disconnected' && lastConnectedIp && !isReconnecting) {
-          handleReconnect();
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    const attemptFullscreen = async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
         }
-      };
-
-      checkConnection();
-      const interval = setInterval(checkConnection, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [socket, lastConnectedIp]);
-
-  // Load last connected IP from localStorage, but don't auto-connect if already connected
-  useEffect(() => {
-    const storedIp = localStorage.getItem('lastConnectedIp');
-    if (storedIp) {
-      setLastConnectedIp(storedIp);
-      // Only attempt connection if not already connected
-      if (socket?.readyState !== WebSocket.OPEN) {
-        handleConnect(storedIp);
+      } catch (err) {
+        setShowPermissionAlert(true);
+        setTimeout(() => setShowPermissionAlert(false), 3000);
       }
-    }
+    };
+
+    attemptFullscreen();
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
-
-  const handleConnect = useCallback(async (ipAddress) => {
-    // Don't attempt to connect if already connected
-    if (socket?.readyState === WebSocket.OPEN) {
-      setShowConnectPopup(false);
-      return;
-    }
-
-    try {
-      setIsReconnecting(true);
-      setConnectionStatus('connecting');
-      
-      const connectPromise = onConnect(ipAddress);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), RECONNECT_TIMEOUT)
-      );
-
-      await Promise.race([connectPromise, timeoutPromise]);
-      
-      localStorage.setItem('lastConnectedIp', ipAddress);
-      setLastConnectedIp(ipAddress);
-      setRetryCount(0);
-      setShowConnectPopup(false);
-    } catch (error) {
-      console.error('Connection failed:', error);
-      setConnectionStatus('failed');
-      
-      if (retryCount < MAX_RETRY_ATTEMPTS) {
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => handleReconnect(), 1000);
-      } else {
-        // Only show popup if we're not connected and have exhausted retries
-        if (socket?.readyState !== WebSocket.OPEN) {
-          setShowConnectPopup(true);
-        }
-      }
-    } finally {
-      setIsReconnecting(false);
-    }
-  }, [onConnect, retryCount, socket]);
-
-  const handleReconnect = useCallback(async () => {
-    // Don't attempt to reconnect if already connected
-    if (socket?.readyState === WebSocket.OPEN) {
-      return;
-    }
-
-    if (!lastConnectedIp) {
-      setShowConnectPopup(true);
-      return;
-    }
-
-    if (!isReconnecting) {
-      await handleConnect(lastConnectedIp);
-    }
-  }, [lastConnectedIp, isReconnecting, handleConnect, socket]);
 
   const toggleFullscreen = async () => {
     try {
@@ -187,33 +104,16 @@ const Mainframe = ({ socket, cameraData, sensorData, onConnect }) => {
         onActivate={() => setIsAutonomousMode(true)} 
       />
 
-      <div className="fixed top-2 right-2 z-[60] flex gap-2">
-        <button
-          onClick={handleReconnect}
-          disabled={isReconnecting}
-          className={`p-1.5 rounded-full transition-all duration-300 backdrop-blur-sm border border-white/50 group
-            ${isReconnecting ? 'bg-blue-200/30' : 'bg-white/30 hover:bg-white/40'}
-            ${connectionStatus === 'connected' ? 'border-green-500/50' : 'border-white/50'}`}
-          title={`${connectionStatus === 'connected' ? 'Connected' : lastConnectedIp ? `Reconnect to ${lastConnectedIp}` : 'Connect to server'}`}
-        >
-          <RefreshCw 
-            className={`w-4 h-4 
-              ${isReconnecting ? 'animate-spin text-blue-700' : 'group-hover:rotate-180 transition-transform duration-500 text-blue-900'}
-              ${connectionStatus === 'connected' ? 'text-green-600' : ''}`} 
-          />
-        </button>
-        
-        <button
-          onClick={toggleFullscreen}
-          className="p-1.5 rounded-full bg-white/30 hover:bg-white/40 transition-all duration-300 backdrop-blur-sm border border-white/50"
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-4 h-4 text-blue-900" />
-          ) : (
-            <Maximize2 className="w-4 h-4 text-blue-900" />
-          )}
-        </button>
-      </div>
+      <button
+        onClick={toggleFullscreen}
+        className="fixed top-2 right-2 z-[60] p-1.5 rounded-full bg-white/30 hover:bg-white/40 transition-all duration-300 backdrop-blur-sm border border-white/50"
+      >
+        {isFullscreen ? (
+          <Minimize2 className="w-4 h-4 text-blue-900" />
+        ) : (
+          <Maximize2 className="w-4 h-4 text-blue-900" />
+        )}
+      </button>
 
       <div className="flex flex-col h-full">
         <div className="flex-none">
@@ -267,15 +167,8 @@ const Mainframe = ({ socket, cameraData, sensorData, onConnect }) => {
               </div>
             </div>
           </div>
-          
         </div>
       </div>
-      {showConnectPopup && socket?.readyState !== WebSocket.OPEN && (
-        <ConnectPopup 
-          onConnect={handleConnect}
-          onClose={() => setShowConnectPopup(false)}
-        />
-      )}
     </div>
   );
 };
