@@ -1,13 +1,7 @@
 import React, { useState,useEffect } from 'react';
-import Cameraview from './CameraFrame/CameraView';
-import AnalyticsSuit from './Analytics/AnalyticsFrame';
-import ControllerDisplay from './ControllerDisplay';
-import Topbar from './Topbar';
 import { Compass, Gauge, Navigation, Camera, Radio } from 'lucide-react';
-import { Maximize2, Minimize2 } from 'lucide-react';
 import FeaturePortal from './FeaturePortal';
-import AutonomousControlPage from './Genesis';
-import FloatingAutonomousButton from './FloatingAutonomousButton';
+
 
 const FEATURES = {
   thrusterPower: { name: 'Main Thruster Power', defaultLocked: false },

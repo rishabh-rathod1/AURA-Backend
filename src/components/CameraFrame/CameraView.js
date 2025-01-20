@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import VisionControls from './VisionControls';
 import { IpAddressContext } from '../../IpAddressContext';
 import { Camera, Maximize2, Minimize2, Lock, Unlock, AlertCircle } from 'lucide-react';
@@ -19,10 +19,28 @@ const CameraView = ({ socket }) => {
   const camera1Url = `http://${ipAddress}:5000/camera/0`;
   const camera2Url = `http://${ipAddress}:5000/camera/1`;
   
+  const screenshotButtonRef = useRef(null);
+
   const takeFullPageScreenshot = () => {
-    window.print();
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key.toLowerCase() === 'h') {
+        // Trigger the click event of the screenshot button
+        screenshotButtonRef.current?.click();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
   const handleDragStart = (e, position) => {
     if (isLocked) return;
     dragItem.current = position;

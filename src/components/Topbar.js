@@ -639,7 +639,7 @@ const Topbar = () => {
   // Window content mapping
   const windowContents = {
     'Vehicle Info': <VehicleInfo/>,
-    'Advanced Analytics': <PowerAnalytics />,
+    // 'Advanced Analytics': <PowerAnalytics />,
     'Crack Detection': <CrackDetection/>,
     'Frame Profile': <FrameProfile/>,
     'LoRa Weather Network':<LoRaWeatherNetwork/>,

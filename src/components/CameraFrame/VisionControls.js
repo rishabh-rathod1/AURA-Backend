@@ -8,26 +8,64 @@ const VisionControls = ({ socket }) => {
   const [auxLight, setAuxLight] = useState(false);
   const [lastButtonState, setLastButtonState] = useState({ 1: false, 2: false });
 
+  // Function to send light update command
+  const sendLightCommand = useCallback((lightType, state) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const command = {
+        command: 'update_lights',
+      };
+      
+      // Only include the specific light that changed
+      if (lightType === 'main') {
+        command.main_light = state;
+      } else if (lightType === 'aux') {
+        command.aux_light = state;
+      }
+
+      socket.send(JSON.stringify(command));
+    }
+  }, [socket]);
+
+  // Handle UI button clicks
+  const handleMainLightToggle = useCallback(() => {
+    const newState = !mainLight;
+    setMainLight(newState);
+    sendLightCommand('main', newState);
+  }, [mainLight, sendLightCommand]);
+
+  const handleAuxLightToggle = useCallback(() => {
+    const newState = !auxLight;
+    setAuxLight(newState);
+    sendLightCommand('aux', newState);
+  }, [auxLight, sendLightCommand]);
+
+  // Handle gamepad input
   const handleGamepadInput = useCallback(() => {
     const gamepads = navigator.getGamepads();
     for (const gamepad of gamepads) {
       if (gamepad) {
+        // Button 1 - Aux Light
         if (gamepad.buttons[1].pressed !== lastButtonState[1]) {
           if (gamepad.buttons[1].pressed) {
-            setAuxLight(prev => !prev);
+            const newState = !auxLight;
+            setAuxLight(newState);
+            sendLightCommand('aux', newState);
           }
           setLastButtonState(prev => ({ ...prev, 1: gamepad.buttons[1].pressed }));
         }
 
+        // Button 2 - Main Light
         if (gamepad.buttons[2].pressed !== lastButtonState[2]) {
           if (gamepad.buttons[2].pressed) {
-            setMainLight(prev => !prev);
+            const newState = !mainLight;
+            setMainLight(newState);
+            sendLightCommand('main', newState);
           }
           setLastButtonState(prev => ({ ...prev, 2: gamepad.buttons[2].pressed }));
         }
       }
     }
-  }, [lastButtonState]);
+  }, [lastButtonState, auxLight, mainLight, sendLightCommand]);
 
   useEffect(() => {
     let animationFrameId;
@@ -38,16 +76,6 @@ const VisionControls = ({ socket }) => {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
   }, [handleGamepadInput]);
-
-  useEffect(() => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({
-        command: 'update_lights',
-        main_light: mainLight,
-        aux_light: auxLight
-      }));
-    }
-  }, [mainLight, auxLight, socket]);
 
   return (
     <div className="flex flex-col w-full h-full min-h-0 max-h-full overflow-y-auto">
@@ -64,7 +92,7 @@ const VisionControls = ({ socket }) => {
             <div className="flex flex-col items-center space-y-2">
               <h2 className="text-xs sm:text-sm font-medium text-slate-700">Main Light</h2>
               <button
-                onClick={() => setMainLight(!mainLight)}
+                onClick={handleMainLightToggle}
                 className="p-2 bg-blue-500 text-white rounded"
               >
                 {mainLight ? (
@@ -81,7 +109,7 @@ const VisionControls = ({ socket }) => {
             <div className="flex flex-col items-center space-y-2">
               <h2 className="text-xs sm:text-sm font-medium text-slate-700">Aux Light</h2>
               <button
-                onClick={() => setAuxLight(!auxLight)}
+                onClick={handleAuxLightToggle}
                 className="p-2 bg-blue-500 text-white rounded"
               >
                 {auxLight ? (
@@ -95,14 +123,7 @@ const VisionControls = ({ socket }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
-          <div className="bg-white/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-md border border-slate-200">
-            <div className="flex items-center justify-center space-x-2">
-              <Gamepad className="w-10 h-10 sm:w-10 sm:h-10" />
-              <span className="text-[10px] sm:text-xs text-slate-600">
-                Button 1: Aux Light | Button 2: Main Light
-              </span>
-            </div>
-          </div>
+          
 
           <div className="bg-white/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-md border border-slate-200">
             <div className="text-center text-[10px] sm:text-xs text-slate-600 mt-4">

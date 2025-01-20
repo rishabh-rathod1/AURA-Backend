@@ -76,6 +76,11 @@ code {
   top: -50%;
   transform: rotate(360deg);
 }
+@media print {
+  @page {
+    size: landscape;
+  }
+}
 
 @keyframes wave {
   0% {
