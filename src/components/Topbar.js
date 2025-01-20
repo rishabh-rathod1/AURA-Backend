@@ -6,6 +6,40 @@ import { IpAddressContext } from '../IpAddressContext';
 import { MapPin, Thermometer, Droplets, Navigation, ChevronLeft, Battery, Signal } from 'lucide-react';
 
 
+const IframeWindow = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-cyan-950 via-cyan-900 to-cyan-950 p-3 sm:p-4 rounded-xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg sm:text-xl font-bold text-cyan-50">
+          External Dashboard
+        </h3>
+        <div className="text-xs sm:text-sm text-cyan-400 flex items-center gap-2">
+          {isLoading && (
+            <>
+              <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse" />
+              Loading...
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* iFrame Container */}
+      <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-cyan-950/80 to-cyan-900/80 rounded-xl backdrop-blur-xl border border-cyan-800/30 overflow-hidden">
+        <iframe
+          src="http://192.168.41.239" // Replace with your desired URL
+          className="w-full h-full"
+          onLoad={() => setIsLoading(false)}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+};
+
 
 
 const LoRaWeatherNetwork = () => {
@@ -642,7 +676,7 @@ const Topbar = () => {
     // 'Advanced Analytics': <PowerAnalytics />,
     'Crack Detection': <CrackDetection/>,
     'Frame Profile': <FrameProfile/>,
-    'LoRa Weather Network':<LoRaWeatherNetwork/>,
+    'LoRa Weather Network':<IframeWindow/>,
     'Manuals': (
       <div className="text-white">
         <h3 className="text-lg font-semibold mb-4">System Manuals</h3>
