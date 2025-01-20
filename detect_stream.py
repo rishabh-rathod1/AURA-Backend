@@ -261,7 +261,7 @@ if __name__ == "__main__":
         stream_url = 'http://192.168.2.1:5000/camera/1'
         detector = StreamDetector(
             stream_url=stream_url,
-            model_path='models/best_model.keras',
+            model_path='crackDetectionModels/best_model.keras',
             retry_interval=5
         )
         app.run(host='0.0.0.0', port=8000, threaded=True)
