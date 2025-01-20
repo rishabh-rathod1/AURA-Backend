@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef,useContext } from 'react';
 import FloatingWindow from './FloatingWindow';
 import { RotateCw, RotateCcw } from 'lucide-react';
-import { Activity, AlertCircle, Camera, Maximize2 } from 'lucide-react';
+import { Activity, AlertCircle, Camera, Maximize2 , CheckCircle} from 'lucide-react';
 import { IpAddressContext } from '../IpAddressContext';
 import { MapPin, Thermometer, Droplets, Navigation, ChevronLeft, Battery, Signal } from 'lucide-react';
 
@@ -194,72 +194,124 @@ const LoRaWeatherNetwork = () => {
 // Assuming you have an IPContext set up elsewhere
 
 const CrackDetection = () => {
-  const { ipAddress } = useContext(IpAddressContext);
-  const detectionStats = {
-    status: "Active",
-    confidence: "96.5%",
-    lastDetection: "2.3s ago",
-    resolution: "1920x1080",
-    processingRate: "30 FPS"
-  };
+  const [stats, setStats] = useState({
+    confidence: 0,
+    crack_detected: false,
+    crack_count: 0,
+    largest_crack: 0,
+    avg_width: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/stats');
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    // Update stats every second
+    const interval = setInterval(fetchStats, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="w-full h-full min-h-screen p-4 md:p-6 lg:p-8 bg-gradient-to-br from-gray-900 via-cyan-950 to-teal-950">
-      <div className="max-w-7xl mx-auto flex flex-col h-full gap-6">
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h2 className="text-lg md:text-xl font-semibold text-white flex items-center gap-2">
-            <Camera className="text-cyan-400" />
-            Crack Detection Model
-          </h2>
-          <div className="flex items-center gap-2 bg-emerald-500/20 px-3 py-1.5 rounded-full">
-            <Activity size={16} className="text-emerald-400" />
-            <span className="text-sm text-emerald-300">Model Active</span>
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-800">Crack Detection System</h1>
+          <p className="text-slate-600 mt-2">Real-time structural monitoring</p>
         </div>
 
-        {/* Video Container */}
-        <div className="relative w-full rounded-lg overflow-hidden bg-gradient-to-br from-gray-950 to-gray-900 border border-cyan-900/20 shadow-lg">
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <button className="p-2 bg-gray-900/80 rounded-lg hover:bg-gray-900 transition-colors">
-              <Maximize2 size={20} className="text-cyan-400" />
-            </button>
-          </div>
-          <div className="relative w-full pb-[56.25%]">
-            <iframe
-              src={`http://${ipAddress}:5001`}
-              className="absolute top-0 left-0 w-full h-full object-cover"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries({
-            "Confidence": detectionStats.confidence,
-            "Last Detection": detectionStats.lastDetection,
-            "Resolution": detectionStats.resolution,
-            "Processing Rate": detectionStats.processingRate
-          }).map(([label, value]) => (
-            <div key={label} className="bg-gradient-to-br from-cyan-950/50 to-gray-900/50 p-4 rounded-lg border border-cyan-900/20">
-              <div className="text-sm text-gray-400 mb-1">{label}</div>
-              <div className="text-lg font-semibold text-cyan-400">{value}</div>
+        {/* Main content grid */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Left column - Raw Feed */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="p-4 border-b border-slate-200">
+              <div className="flex items-center">
+                <h2 className="text-xl font-semibold text-slate-800">Raw Camera Feed</h2>
+                <span className="ml-3 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-full">
+                  Live
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="p-4">
+              <div className="w-full h-[450px] bg-black rounded-lg overflow-hidden">
+                <img
+                  src="http://localhost:8000/raw_feed"
+                  alt="Raw camera feed"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+          </div>
 
-        {/* Alert Box */}
-        <div className="w-full p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-          <div className="flex items-start gap-2">
-            <AlertCircle size={20} className="text-yellow-500 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-yellow-500 mb-1">Detection Notes</h3>
-              <p className="text-sm text-gray-300">
-                The model is calibrated for surface cracks between 0.1mm - 5mm width. 
-                Ensure proper lighting conditions for optimal detection accuracy.
-              </p>
+          {/* Right column - Detection Feed */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="p-4 border-b border-slate-200">
+              <div className="flex items-center">
+                <h2 className="text-xl font-semibold text-slate-800">Detection Analysis</h2>
+                <span className="ml-3 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded-full">
+                  Live
+                </span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="w-full h-[450px] bg-black rounded-lg overflow-hidden mb-4">
+                <img
+                  src="http://localhost:8000/detection_feed"
+                  alt="Crack detection feed"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-slate-600">Status</h3>
+                    <CheckCircle className={`h-5 w-5 ${stats.crack_detected ? 'text-red-500' : 'text-green-500'}`} />
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 mt-2">
+                    {stats.crack_detected ? 'Crack Detected' : 'No Cracks'}
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-slate-600">Detection Confidence</h3>
+                    <AlertCircle className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 mt-2">
+                    {stats.confidence.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Analysis Results */}
+              <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h3 className="font-medium text-slate-900 mb-3">Analysis Results</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Detected Cracks</span>
+                    <span className="font-medium text-slate-900">{stats.crack_count}</span>
+                  </div>
+                  <div className="border-t border-slate-200 my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Largest Crack Length</span>
+                    <span className="font-medium text-slate-900">{stats.largest_crack} cm</span>
+                  </div>
+                  <div className="border-t border-slate-200 my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Average Width</span>
+                    <span className="font-medium text-slate-900">{stats.avg_width} mm</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -267,6 +319,8 @@ const CrackDetection = () => {
     </div>
   );
 };
+
+
 
 
 
